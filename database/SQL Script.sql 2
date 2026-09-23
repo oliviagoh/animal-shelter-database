@@ -1,0 +1,313 @@
+ALTER SESSION SET NLS_DATE_FORMAT='YYYY-MM-DD';
+ALTER SESSION SET NLS_TIMESTAMP_FORMAT = 'YYYY-MM-DD HH24:MI';
+
+DROP TABLE Health_History CASCADE CONSTRAINTS;
+DROP TABLE Donations CASCADE CONSTRAINTS;
+DROP TABLE Tasks CASCADE CONSTRAINTS;
+DROP TABLE Adoptions CASCADE CONSTRAINTS;
+DROP TABLE Adopters CASCADE CONSTRAINTS;
+DROP TABLE Veterinarians CASCADE CONSTRAINTS;
+DROP TABLE Staff CASCADE CONSTRAINTS;
+DROP TABLE Animals CASCADE CONSTRAINTS;
+
+CREATE TABLE Animals (
+    animal_id NUMERIC(9) PRIMARY KEY,
+    animal_name VARCHAR2(30) NOT NULL,
+    species VARCHAR2(30) NOT NULL,
+    breed VARCHAR2(30),
+    gender CHAR(1) NOT NULL CHECK (gender IN ('M','F')),
+    age NUMERIC(2) NOT NULL CHECK (age BETWEEN 0 AND 30),
+    rescue_date DATE NOT NULL,
+    status VARCHAR2(20) NOT NULL CHECK (status IN ('Available', 'Adopted', 'Under Treatments'))
+);
+
+CREATE TABLE Staff (
+    staff_id NUMERIC(9) PRIMARY KEY,
+    staff_name VARCHAR2(50) NOT NULL,
+    staff_DOB DATE NOT NULL,
+    staff_tel VARCHAR2(13) UNIQUE NOT NULL,
+    staff_email VARCHAR2(40) UNIQUE CHECK (staff_email LIKE '%@%.%'),
+    hire_date DATE NOT NULL,
+    staff_position VARCHAR2(50) NOT NULL,
+    staff_shift VARCHAR2(50) NOT NULL
+);
+
+CREATE TABLE Veterinarians (
+    vet_id NUMERIC(9) PRIMARY KEY,
+    vet_name VARCHAR2(30) NOT NULL,
+    vet_phone_number VARCHAR2(13)
+);
+
+CREATE TABLE Adopters (
+    adopter_id NUMERIC(9) PRIMARY KEY,
+    adopter_name VARCHAR2(50) NOT NULL,
+    adopter_dob DATE NOT NULL,
+    adopter_tel VARCHAR2(13) NOT NULL,
+    adopter_address VARCHAR2(50) NOT NULL,
+    adopter_email VARCHAR2(40),
+    CONSTRAINT chk_email_format CHECK (REGEXP_LIKE(adopter_email, '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'))
+);
+
+CREATE TABLE Adoptions (
+    adoption_id NUMERIC(9) PRIMARY KEY,
+    animal_id NUMERIC(9) NOT NULL,
+    adopter_id NUMERIC(9) NOT NULL,
+    date_of_adoption DATE,
+    adoption_status VARCHAR2(10) NOT NULL,
+    FOREIGN KEY (animal_id) REFERENCES Animals(animal_id),
+    FOREIGN KEY (adopter_id) REFERENCES Adopters(adopter_id),
+    CONSTRAINT uq_animal_adoption UNIQUE (animal_id)
+);
+
+CREATE TABLE Tasks (
+    task_id NUMERIC(9) PRIMARY KEY,
+    animal_id NUMERIC(9) NOT NULL,
+    staff_id NUMERIC(9) NOT NULL,
+    task_name VARCHAR2(30) NOT NULL,
+    task_date_time TIMESTAMP NOT NULL,
+    FOREIGN KEY (animal_id) REFERENCES Animals(animal_id),
+    FOREIGN KEY (staff_id) REFERENCES Staff(staff_id),
+    CONSTRAINT unique_task_assignment UNIQUE (animal_id, staff_id, task_date_time)
+);
+
+CREATE TABLE Donations (
+    donation_id NUMERIC(9) PRIMARY KEY,
+    staff_id NUMERIC(9),
+    supporter_name VARCHAR2(50),
+    donation_type VARCHAR2(50) NOT NULL,
+    donation_method VARCHAR2(8) NOT NULL CHECK (donation_method IN ('Physical', 'Online')),
+    amount NUMERIC(10,2) NOT NULL CHECK (amount>0),
+    donation_date DATE NOT NULL,
+    FOREIGN KEY (staff_id) REFERENCES Staff(staff_id)
+);
+
+CREATE TABLE Health_History ( 
+    record_id NUMERIC(10) PRIMARY KEY,  
+    animal_id NUMERIC(9), 
+    vet_id NUMERIC(9), 
+    check_up_date DATE NOT NULL, 
+    diagnosis VARCHAR2(50) NOT NULL,  
+    treatment VARCHAR2(50) NOT NULL, 
+    health_check_rating NUMERIC(2,1) NOT NULL CHECK (health_check_rating BETWEEN 0 AND 5), 
+    FOREIGN KEY (animal_id) REFERENCES Animals(animal_id), 
+    FOREIGN KEY (vet_id) REFERENCES Veterinarians(vet_id) 
+); 
+
+-- Data for Animals table
+INSERT INTO Animals VALUES (101, 'Bella', 'Dog', 'Golden Retriever', 'F', 4, TO_DATE('2023-01-10', 'YYYY-MM-DD'), 'Available');
+INSERT INTO Animals VALUES (102, 'Max', 'Cat', 'Siamese', 'M', 3, TO_DATE('2022-11-05', 'YYYY-MM-DD'), 'Adopted');
+INSERT INTO Animals VALUES (103, 'Luna', 'Dog', 'Beagle', 'F', 2, TO_DATE('2023-06-14', 'YYYY-MM-DD'), 'Available');
+INSERT INTO Animals VALUES (104, 'Rocky', 'Dog', 'Bulldog', 'M', 5, TO_DATE('2021-08-20', 'YYYY-MM-DD'), 'Under Treatments');
+INSERT INTO Animals VALUES (105, 'Milo', 'Cat', 'Persian', 'M', 1, TO_DATE('2024-01-30', 'YYYY-MM-DD'), 'Available');
+INSERT INTO Animals VALUES (106, 'Coco', 'Bird', 'Parrot', 'F', 6, TO_DATE('2022-05-18', 'YYYY-MM-DD'), 'Adopted');
+INSERT INTO Animals VALUES (107, 'Nala', 'Dog', 'Labrador', 'F', 3, TO_DATE('2023-09-25', 'YYYY-MM-DD'), 'Available');
+INSERT INTO Animals VALUES (108, 'Simba', 'Cat', 'Maine Coon', 'M', 2, TO_DATE('2023-02-11', 'YYYY-MM-DD'), 'Available');
+INSERT INTO Animals VALUES (109, 'Zoe', 'Rabbit', 'Dwarf', 'F', 1, TO_DATE('2023-12-12', 'YYYY-MM-DD'), 'Available');
+INSERT INTO Animals VALUES (110, 'Jack', 'Dog', 'Poodle', 'M', 4, TO_DATE('2022-07-07', 'YYYY-MM-DD'), 'Adopted');
+INSERT INTO Animals VALUES (111, 'Daisy', 'Cat', 'Bengal', 'F', 2, TO_DATE('2024-03-01', 'YYYY-MM-DD'), 'Available');
+INSERT INTO Animals VALUES (112, 'Toby', 'Dog', 'Husky', 'M', 5, TO_DATE('2021-06-15', 'YYYY-MM-DD'), 'Under Treatments');
+INSERT INTO Animals VALUES (113, 'Chloe', 'Rabbit', 'Angora', 'F', 3, TO_DATE('2023-10-09', 'YYYY-MM-DD'), 'Available');
+INSERT INTO Animals VALUES (114, 'Oscar', 'Cat', 'Sphynx', 'M', 2, TO_DATE('2023-04-21', 'YYYY-MM-DD'), 'Available');
+INSERT INTO Animals VALUES (115, 'Misty', 'Bird', 'Canary', 'F', 1, TO_DATE('2024-02-13', 'YYYY-MM-DD'), 'Adopted');
+INSERT INTO Animals VALUES (116, 'Buddy', 'Dog', 'Shih Tzu', 'M', 4, TO_DATE('2022-10-30', 'YYYY-MM-DD'), 'Available');
+INSERT INTO Animals VALUES (117, 'Ellie', 'Cat', 'Ragdoll', 'F', 2, TO_DATE('2023-08-08', 'YYYY-MM-DD'), 'Available');
+INSERT INTO Animals VALUES (118, 'Leo', 'Rabbit', 'Rex', 'M', 1, TO_DATE('2024-06-06', 'YYYY-MM-DD'), 'Available');
+INSERT INTO Animals VALUES (119, 'Ruby', 'Dog', 'Cocker Spaniel', 'F', 3, TO_DATE('2023-05-04', 'YYYY-MM-DD'), 'Adopted');
+INSERT INTO Animals VALUES (120, 'Shadow', 'Cat', 'Scottish Fold', 'M', 3, TO_DATE('2022-09-03', 'YYYY-MM-DD'), 'Available');
+INSERT INTO Animals VALUES (121, 'Lucky', 'Cat', 'Pastoral Cat', 'M', 2, TO_DATE('2023-10-15', 'YYYY-MM-DD'), 'Adopted');
+
+-- Data for Staff table
+INSERT INTO Staff VALUES (201,'Ernest Smith',TO_DATE('2000-11-18','YYYY-MM-DD'),'60126659846','ernests@gmail.com',TO_DATE('2020-01-01','YYYY-MM-DD'),'Animal Caretaker','Day');
+INSERT INTO Staff VALUES (202,'Derek Lee',TO_DATE('1990-02-27','YYYY-MM-DD'),'60103695548','derek0227@gmail.com',TO_DATE('2020-01-01','YYYY-MM-DD'),'Animal Trainer','Day');
+INSERT INTO Staff VALUES (203,'Alana Maria',TO_DATE('1998-01-17','YYYY-MM-DD'),'60194123597','alanam117@gmail.com',TO_DATE('2020-01-01','YYYY-MM-DD'),'Animal Caretaker','Day');
+INSERT INTO Staff VALUES (204,'May Wong',TO_DATE('2001-11-18','YYYY-MM-DD'),'60153129888','wongmay11@gmail.com',TO_DATE('2020-01-01','YYYY-MM-DD'),'Shelter Manager','Day');
+INSERT INTO Staff VALUES (205,'Raul Julia',TO_DATE('2000-03-09','YYYY-MM-DD'),'60110241994','raulj39@gmail.com',TO_DATE('2020-01-01','YYYY-MM-DD'),'Kennel technician','Day');
+INSERT INTO Staff VALUES (206,'Sanjay Kumar',TO_DATE('1999-09-30','YYYY-MM-DD'),'60132511921','sanjayyyk@gmail.com',TO_DATE('2020-01-01','YYYY-MM-DD'),'Animal Caretaker','Day');
+INSERT INTO Staff VALUES (207,'Vimla Devi',TO_DATE('1999-05-04','YYYY-MM-DD'),'60101789564','vimladevi54@gmail.com',TO_DATE('2020-01-01','YYYY-MM-DD'),'Animal Caretaker','Night');
+INSERT INTO Staff VALUES (208,'Chris Finch',TO_DATE('2002-12-30','YYYY-MM-DD'),'60153364987','chris1230@gmail.com',TO_DATE('2020-01-01','YYYY-MM-DD'),'Animal Caretaker','Night');
+INSERT INTO Staff VALUES (209,'Lily Ng',TO_DATE('1995-01-01','YYYY-MM-DD'),'60196987799','lily11ng@gmail.com',TO_DATE('2020-01-01','YYYY-MM-DD'),'Shelter Manager','Night');
+INSERT INTO Staff VALUES (210,'Lilain Skye',TO_DATE('2000-07-01','YYYY-MM-DD'),'60171172000','lilianskye@gmail.com',TO_DATE('2021-05-01','YYYY-MM-DD'),'Animal Caretaker','Day');
+INSERT INTO Staff VALUES (211,'Anita Singh',TO_DATE('2001-06-06','YYYY-MM-DD'),'60114789652','anita66@gmail.com',TO_DATE('2021-09-15','YYYY-MM-DD'),'Animal Trainer','Day');
+INSERT INTO Staff VALUES (212,'Henry Allen',TO_DATE('2004-08-25','YYYY-MM-DD'),'60189956521','henryallen0825@gmail.com',TO_DATE('2022-01-25','YYYY-MM-DD'),'Animal Caretaker','Night');
+INSERT INTO Staff VALUES (213,'Jordan Lim',TO_DATE('2000-04-12','YYYY-MM-DD'),'60136695866','limj412@gmail.com',TO_DATE('2023-05-02','YYYY-MM-DD'),'Animal Caretaker','Night');
+INSERT INTO Staff VALUES (214,'Raven Summers',TO_DATE('2002-06-13','YYYY-MM-DD'),'60101988756','rsummers0825@gmail.com',TO_DATE('2023-12-01','YYYY-MM-DD'),'Animal Caretaker','Night');
+INSERT INTO Staff VALUES (215,'Priya Prasad',TO_DATE('2001-01-01','YYYY-MM-DD'),'60111111111','pr1ya@gmail.com',TO_DATE('2024-03-01','YYYY-MM-DD'),'Animal Caretaker','Day');
+
+-- Data for Veterinarians table
+INSERT INTO Veterinarians VALUES (1, 'Dr. Stephanie', '012-1231234');
+INSERT INTO Veterinarians VALUES (2, 'Dr. Haris', '012-0982789');
+INSERT INTO Veterinarians VALUES (3, 'Dr. Leo', '019-1280961');
+INSERT INTO Veterinarians VALUES (4, 'Dr. Calvin', '019-7260172');
+INSERT INTO Veterinarians VALUES (5, 'Dr. Anson', '012-3232323');
+INSERT INTO Veterinarians VALUES (6, 'Dr. Farisha', '0131-901908');
+INSERT INTO Veterinarians VALUES (7, 'Dr. Liam', '018-7654567');
+INSERT INTO Veterinarians VALUES (8, 'Dr. Melissa', '0142302039');
+
+-- Data for Adopters table
+INSERT INTO Adopters VALUES (301, 'Alice Tan', TO_DATE('1990-05-21', 'YYYY-MM-DD'), '60123456789', '123 KL Street', 'alice.tan@example.com');
+INSERT INTO Adopters VALUES (302, 'John Lim', TO_DATE('1985-11-02', 'YYYY-MM-DD'), '60129876543', '456 PJ Avenue', 'john.lim@example.com');
+INSERT INTO Adopters VALUES (303, 'Melissa Ong', TO_DATE('1993-07-19', 'YYYY-MM-DD'), '60188765432', '789 Subang', 'melissa.ong@example.com');
+INSERT INTO Adopters VALUES (304, 'Brian Wong', TO_DATE('1979-12-01', 'YYYY-MM-DD'), '60137654321', 'Ipoh Central', 'brian.w@example.com');
+INSERT INTO Adopters VALUES (305, 'Sarah Lee', TO_DATE('1995-04-10', 'YYYY-MM-DD'), '60176543210', 'Penang Road', 'sarah.lee@example.com');
+INSERT INTO Adopters VALUES (306, 'Jason Ng', TO_DATE('1990-06-11', 'YYYY-MM-DD'), '60199887766', 'Kuching South', 'jason.ng@example.com');
+INSERT INTO Adopters VALUES (307, 'Natalie Chin', TO_DATE('1997-03-28', 'YYYY-MM-DD'), '60122334455', 'Kota Kinabalu', 'natalie.chin@example.com');
+INSERT INTO Adopters VALUES (308, 'Darren Tan', TO_DATE('1988-08-15', 'YYYY-MM-DD'), '60133445566', 'Seremban', 'darren.tan@example.com');
+INSERT INTO Adopters VALUES (309, 'Rachel Teo', TO_DATE('1991-10-05', 'YYYY-MM-DD'), '60144556677', 'JB Central', 'rachel.teo@example.com');
+INSERT INTO Adopters VALUES (310, 'Henry Goh', TO_DATE('1983-09-23', 'YYYY-MM-DD'), '60155667788', 'Alor Setar', 'henry.g@example.com');
+INSERT INTO Adopters VALUES (311, 'Ivy Chua', TO_DATE('1992-02-14', 'YYYY-MM-DD'), '60166778899', 'Melaka Town', 'ivy.chua@example.com');
+INSERT INTO Adopters VALUES (312, 'Kelvin Yeo', TO_DATE('1986-01-31', 'YYYY-MM-DD'), '60177889900', 'Miri East', 'kelvin.yeo@example.com');
+
+-- Data for Adoptions table
+INSERT INTO Adoptions VALUES (501, 102, 301, TO_DATE('2024-02-10', 'YYYY-MM-DD'), 'Success');
+INSERT INTO Adoptions VALUES (502, 110, 301, TO_DATE('2024-05-12', 'YYYY-MM-DD'), 'Success');
+INSERT INTO Adoptions VALUES (503, 105, 302, TO_DATE('2024-01-10', 'YYYY-MM-DD'), 'Success');
+INSERT INTO Adoptions VALUES (504, 114, 303, TO_DATE('2024-06-25', 'YYYY-MM-DD'), 'Success');
+INSERT INTO Adoptions VALUES (505, 106, 304, TO_DATE('2025-08-01', 'YYYY-MM-DD'), 'Pending');
+INSERT INTO Adoptions VALUES (506, 119, 304, TO_DATE('2024-07-20', 'YYYY-MM-DD'), 'Success');
+INSERT INTO Adoptions VALUES (507, 109, 305, TO_DATE('2024-03-15', 'YYYY-MM-DD'), 'Success');
+INSERT INTO Adoptions VALUES (508, 111, 306, TO_DATE('2024-04-05', 'YYYY-MM-DD'), 'Success');
+INSERT INTO Adoptions VALUES (509, 113, 307, TO_DATE('2023-06-07', 'YYYY-MM-DD'), 'Success');
+INSERT INTO Adoptions VALUES (510, 118, 308, TO_DATE('2024-07-15', 'YYYY-MM-DD'), 'Success');
+INSERT INTO Adoptions VALUES (511, 117, 309, TO_DATE('2025-07-01', 'YYYY-MM-DD'), 'Pending');
+INSERT INTO Adoptions VALUES (512, 115, 310, TO_DATE('2024-03-25', 'YYYY-MM-DD'), 'Success');
+INSERT INTO Adoptions VALUES (513, 104, 310, TO_DATE('2024-06-18', 'YYYY-MM-DD'), 'Success');
+INSERT INTO Adoptions VALUES (514, 121, 310, TO_DATE('2025-07-18', 'YYYY-MM-DD'), 'Pending');
+INSERT INTO Adoptions VALUES (515, 120, 311, TO_DATE('2023-07-22', 'YYYY-MM-DD'), 'Success');
+INSERT INTO Adoptions VALUES (516, 108, 311, TO_DATE('2024-07-28', 'YYYY-MM-DD'), 'Success');
+
+-- Data for Tasks Table
+INSERT INTO Tasks VALUES (401,101,201,'Feeding',TO_TIMESTAMP('2025-07-27 09:00', 'YYYY-MM-DD HH24:MI'));
+INSERT INTO Tasks VALUES (402,110,202,'Feeding',TO_TIMESTAMP('2025-07-27 09:00', 'YYYY-MM-DD HH24:MI'));
+INSERT INTO Tasks VALUES (403,102,201,'Feeding',TO_TIMESTAMP('2025-07-27 09:00', 'YYYY-MM-DD HH24:MI'));
+INSERT INTO Tasks VALUES (404,114,204,'Accept strays',TO_TIMESTAMP('2025-07-27 13:00', 'YYYY-MM-DD HH24:MI'));
+INSERT INTO Tasks VALUES (405,113,205,'Kennel Cleaning',TO_TIMESTAMP('2025-07-27 13:00', 'YYYY-MM-DD HH24:MI'));
+INSERT INTO Tasks VALUES (406,101,201,'Playtime',TO_TIMESTAMP('2025-07-27 13:00', 'YYYY-MM-DD HH24:MI'));
+INSERT INTO Tasks VALUES (407,110,202,'Playtime',TO_TIMESTAMP('2025-07-27 13:00', 'YYYY-MM-DD HH24:MI'));
+INSERT INTO Tasks VALUES (408,102,203,'Training',TO_TIMESTAMP('2025-07-27 13:00', 'YYYY-MM-DD HH24:MI'));
+INSERT INTO Tasks VALUES (409,103,206,'Bathing',TO_TIMESTAMP('2025-07-27 15:00', 'YYYY-MM-DD HH24:MI'));
+INSERT INTO Tasks VALUES (410,106,210,'Bathing',TO_TIMESTAMP('2025-07-27 15:00', 'YYYY-MM-DD HH24:MI'));
+INSERT INTO Tasks VALUES (411,112,211,'Training',TO_TIMESTAMP('2025-07-27 15:00', 'YYYY-MM-DD HH24:MI'));
+INSERT INTO Tasks VALUES (412,111,215,'Playtime',TO_TIMESTAMP('2025-07-27 15:00', 'YYYY-MM-DD HH24:MI'));
+INSERT INTO Tasks VALUES (413,107,212,'Feeding',TO_TIMESTAMP('2025-07-27 19:00', 'YYYY-MM-DD HH24:MI'));
+INSERT INTO Tasks VALUES (414,104,207,'Feeding',TO_TIMESTAMP('2025-07-27 19:00', 'YYYY-MM-DD HH24:MI'));
+INSERT INTO Tasks VALUES (415,105,208,'Feeding',TO_TIMESTAMP('2025-07-27 19:00', 'YYYY-MM-DD HH24:MI'));
+INSERT INTO Tasks VALUES (416,108,213,'Feeding',TO_TIMESTAMP('2025-07-27 19:00', 'YYYY-MM-DD HH24:MI'));
+INSERT INTO Tasks VALUES (417,109,214,'Feeding',TO_TIMESTAMP('2025-07-27 19:00', 'YYYY-MM-DD HH24:MI'));
+INSERT INTO Tasks VALUES (418,115,209,'Accept strays',TO_TIMESTAMP('2025-07-27 21:00', 'YYYY-MM-DD HH24:MI'));
+
+-- Data for Donation table
+INSERT INTO Donations VALUES (801,204,'John','Cash','Physical',500.00,TO_DATE('2020-01-01', 'YYYY-MM-DD'));
+INSERT INTO Donations VALUES (802,null,'CatLover','Credit card','Online',200.00,TO_DATE('2020-02-01', 'YYYY-MM-DD'));
+INSERT INTO Donations VALUES (803,null,null,'E-wallet','Online',200.00,TO_DATE('2020-03-01', 'YYYY-MM-DD'));
+INSERT INTO Donations VALUES (804,204,'Lilian','Cheque','Physical',1000.00,TO_DATE('2021-01-01', 'YYYY-MM-DD'));
+INSERT INTO Donations VALUES (805,209,'Ryan','Credit card','Physical',500.00,TO_DATE('2022-01-01', 'YYYY-MM-DD'));
+INSERT INTO Donations VALUES (806,209,null,'Cash','Physical',100.00,TO_DATE('2022-05-01', 'YYYY-MM-DD'));
+INSERT INTO Donations VALUES (807,null,'Diana','Bank transfer','Online',300.00,TO_DATE('2023-04-01', 'YYYY-MM-DD'));
+INSERT INTO Donations VALUES (808,null,'John','Credit Card','Online',300.00,TO_DATE('2025-01-01', 'YYYY-MM-DD'));
+
+-- Data for Health History table
+INSERT INTO Health_History VALUES (502, 102, 2, '2025-02-20', 'Leg fracture', 'Bandaged and immobilized', 2.7); 
+INSERT INTO Health_History VALUES (503, 103, 3, '2025-03-05', 'Eye infection', 'Eye drops twice a day', 4.8); 
+INSERT INTO Health_History VALUES (504, 104, 4, '2025-03-20', 'Broken leg', 'Surgery and splint', 0.5); 
+INSERT INTO Health_History VALUES (505, 105, 5, '2025-04-10', 'Fungal infection', 'Oral antifungal', 3.5); 
+INSERT INTO Health_History VALUES (506, 106, 6, '2025-04-12', 'Malnutrition', 'Supplement feeding', 0.0); 
+INSERT INTO Health_History VALUES (507, 107, 1, '2025-05-01', 'Mite infestation', 'Topical ivermectin', 4.7); 
+INSERT INTO Health_History VALUES (508, 108, 7, '2025-05-15', 'Leg sprain', 'Light Physiotherapy', 4.0); 
+INSERT INTO Health_History VALUES (509, 109, 8, '2025-06-01', 'Internal injury', 'Minor surgery', 1.5); 
+INSERT INTO Health_History VALUES (510, 110, 2, '2025-06-15', 'Respiratory infection', 'Antibiotics', 3.3); 
+INSERT INTO Health_History VALUES (511, 101, 3, '2025-07-01', 'Follow-up skin infection', 'Continued cream and antibiotics', 4.2); 
+INSERT INTO Health_History VALUES (512, 105, 6, '2025-07-05', 'Checkup post-fungal', 'Vitamin supplement', 5.0); 
+INSERT INTO Health_History VALUES (513, 107, 5, '2025-07-12', 'Digestive issues', 'Electrolyte therapy', 3.5); 
+INSERT INTO Health_History VALUES (514, 104, 4, '2025-07-20', 'Leg healing check', 'Cast removed', 5.0); 
+INSERT INTO Health_History VALUES (515, 109, 8, '2025-07-25', 'Post-op infection', 'Additional antibiotics', 1.2);
+
+
+--QUERIES 
+--A query that requires an outer join 
+SELECT A.animal_name AS "Animal Name", 
+    H.diagnosis AS "Diagnosis",  
+    V.vet_name AS "Vet Name", 
+    H.treatment AS "Treatment" 
+FROM Animals A  
+FULL OUTER JOIN Health_History H ON A.animal_id = H.animal_id 
+FULL OUTER JOIN Veterinarians V ON H.vet_id = V.vet_id  
+ORDER BY A.animal_name ASC;  
+
+--A minimum 4 table join with a group by function query. 
+SELECT A.animal_name AS "Animal Name",   
+    UPPER(AD.adoption_status) AS "Adoption Status",   
+    ADS.adopter_name AS "Adopter Name",  
+    COUNT(*) AS "Total Check-ups for Animal",  
+    MAX(H.check_up_date) AS "Most recent animal check-up"  
+FROM Animals A   
+JOIN Health_History H ON A.animal_id = H.animal_id  
+JOIN Adoptions AD ON AD.animal_id = A.animal_id   
+JOIN Adopters ADS ON AD.adopter_id = ADS.adopter_id  
+GROUP BY A.animal_name, AD.adoption_status, ADS.adopter_name  
+ORDER BY A.animal_name ASC;
+ 
+
+--A string pattern matching and date function query 
+SELECT animal_name AS "Animal Name",   
+    species AS "Species",   
+    breed AS "Breed",   
+    gender AS "Gender",   
+    TO_CHAR(rescue_date, 'YYYY-MM-DD') AS "Rescue Date"  
+FROM Animals   
+WHERE gender LIKE 'M'  
+  AND rescue_date BETWEEN TO_DATE('2023-01-01', 'YYYY-MM-DD')   
+  AND TO_DATE('2025-12-01', 'YYYY-MM-DD')  
+ORDER BY rescue_date ASC;   
+
+--A query having both OR and AND 
+SELECT 
+    A.animal_id AS "Animal ID", 
+    A.animal_name AS "Animal name",
+    A.species AS "Species", 
+    A.status AS "Status", 
+    H.health_check_rating AS "Health-check rating", 
+    TO_CHAR(H.check_up_date, 'YYYY-MM-DD') AS "Last checkup"
+FROM Animals A 
+JOIN Health_History H ON A.animal_id = H.animal_id
+WHERE (A.status = 'Under Treatments' AND H.health_check_rating < 3) OR (A.species = 'Dog' AND A.age > 3 AND H.health_check_rating >= 4) 
+ORDER BY H.health_check_rating DESC; 
+
+--A query that consists of at least 2 subqueries. 
+SELECT
+    S.staff_id AS "Staff ID",
+    S.staff_name AS "Staff name",
+    S.staff_position AS "Staff position", 
+    (SELECT COUNT(*) FROM Tasks T WHERE T.staff_id = S.staff_id) AS "Total tasks", 
+    (SELECT COUNT(DISTINCT animal_id) FROM Tasks T WHERE T.staff_id = S.staff_id) AS "Unique animals cared for" 
+FROM Staff S 
+WHERE S.staff_id IN (
+    SELECT staff_id 
+    FROM Tasks 
+    WHERE task_date_time > TO_DATE('2025-07-01', 'YYYY-MM-DD')
+    ) 
+    AND 
+    S.staff_id IN ( 
+    SELECT staff_id 
+    FROM Donations 
+    WHERE donation_date > TO_DATE('2020-01-01', 'YYYY-MM-DD') 
+    ) 
+ORDER BY "Total tasks" DESC; 
+ 
+-- Answer the following question based on your chosen scenario. 
+SELECT 
+    A.animal_id AS "Animal ID", 
+    A.animal_name AS "Animal name", 
+    A.species AS "Species", 
+    A.breed AS "Breed", 
+    TO_CHAR(A.rescue_date, 'YYYY-MM-DD') AS rescue_date, 
+    ROUND(AVG(H.health_check_rating), 1) AS avg_health_rating, 
+    COUNT(H.record_id) AS number_of_checkups
+FROM Animals A 
+JOIN Health_History H ON A.animal_id = H.animal_id 
+WHERE 
+A.rescue_date < ADD_MONTHS(SYSDATE, -12) 
+AND A.status != 'Adopted'
+GROUP BY A.animal_id, A.animal_name, A.species, A.breed, A.rescue_date 
+HAVING AVG(H.health_check_rating) >= 4
+           AND COUNT(H.record_id) >= 2 
+ORDER BY avg_health_rating DESC, number_of_checkups DESC; 
