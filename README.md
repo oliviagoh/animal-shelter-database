@@ -1,2 +1,5 @@
 # animal-shelter-database
-Oracle SQL database management system for managing animals, staff, veterinary health records, adoptions, tasks and donations in an animal shelter.
+A relational database system developed using Oracle SQL to manage animal records, including animal information, availability, and related records.
+
+Technologies: Oracle SQL, SQL Developer
+Skills: Database design, SQL queries, CRUD operations, relational databases
